@@ -37,15 +37,6 @@ PATH=/root/fake:$PATH apt install --yes libjpeg62-turbo-dev libconfig9 rpi-updat
 #rm firmware-brcm80211_20190114-1+rpt4_all.deb
 #apt-mark hold firmware-brcm80211
 
-# try to reduce writing to SD card as much as possible, so they don't get bricked when yanking the power cable
-# Disable swap...
-systemctl disable dphys-swapfile
-apt purge -y dphys-swapfile
-apt autoremove -y
-apt clean
-#echo y | rpi-update
-
-
 systemctl enable ssh
 systemctl disable dnsmasq # we start it manually on respective interfaces
 systemctl disable dhcpcd
@@ -130,8 +121,6 @@ mv /root/stratux/work/update-*.sh /root/
 rm -r /root/stratux/work
 cd /root/stratux
 
-
-rm -r /root/go_path/* # safe space again..
 make install
 rm -r /root/.cache
 
@@ -160,25 +149,22 @@ cp -f modules.txt /etc/modules
 #boot settings
 cp -f config.txt /boot/
 
-#Create default pi password as in old times, and disable initial user creation
-systemctl disable userconfig
-echo "pi:raspberry" | chpasswd
+# #Create default pi password as in old times, and disable initial user creation
+# systemctl disable userconfig
+# echo "pi:raspberry" | chpasswd
 
 #rootfs overlay stuff
-cp -f overlayctl init-overlay /sbin/
-overlayctl install
-# init-overlay replaces raspis initial partition size growing.. Make sure we call that manually (see init-overlay script)
-touch /var/grow_root_part
-mkdir -p /overlay/robase # prepare so we can bind-mount root even if overlay is disabled
+# cp -f overlayctl init-overlay /sbin/
+# overlayctl install
+# # init-overlay replaces raspis initial partition size growing.. Make sure we call that manually (see init-overlay script)
+# touch /var/grow_root_part
+# mkdir -p /overlay/robase # prepare so we can bind-mount root even if overlay is disabled
 
 # So we can import network settings if needed
 touch /boot/.stratux-first-boot
 
 #startup scripts
 cp -f rc.local /etc/rc.local
-
-# Optionally mount /dev/sda1 as /var/log - for logging to USB stick
-echo -e "\n/dev/sda1             /var/log        auto    defaults,nofail,noatime,x-systemd.device-timeout=1ms  0       2" >> /etc/fstab
 
 #disable serial console, disable rfkill state restore, enable wifi on boot
 sed -i /boot/cmdline.txt -e "s/console=serial0,[0-9]\+ /systemd.restore_state=0 rfkill.default_state=1 /"
@@ -189,13 +175,6 @@ sed -i /etc/default/keyboard -e "/^XKBLAYOUT/s/\".*\"/\"us\"/"
 # Set hostname
 echo "stratux" > /etc/hostname
 sed -i /etc/hosts -e "s/raspberrypi/stratux/g"
-
-# Clean up source tree - we don't need it at runtime
-rm -r /root/stratux
-
-
-# Uninstall packages we don't need, clean up temp stuff
-rm -rf /root/go /root/go_path /root/.cache
 
 PATH=/root/fake:$PATH apt remove --purge --yes alsa-ucm-conf alsa-topology-conf bluez bluez-firmware cifs-utils cmake cmake-data \
     v4l-utils rsync pigz pi-bluetooth cpp cpp-10  zlib1g-dev
