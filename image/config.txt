@@ -14,8 +14,13 @@ dtoverlay=disable-bt
 # i2c serial support
 dtoverlay=sc16is752-i2c,int_pin=4,addr=0x4d,xtal=1843900
 
-# Mild overclock
-over_voltage=6
-arm_freq=2000
-gpu_freq=700
-gpu_mem=512
+# disable default (mmc0) behavior on the ACT LED.
+dtparam=act_led_trigger=none
+dtparam=act_led_activelow=off
+
+# The below has been added as a proposed EMI reduction measure. Issue #573.
+sdram_freq=450
+core_freq=450
+arm_freq=900
+
+arm_64bit=1
